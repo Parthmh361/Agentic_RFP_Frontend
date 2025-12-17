@@ -1,0 +1,768 @@
+{
+  "name": "Gemini Agentic RFP Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "db989a05-ac63-4176-b666-6489e59126e8",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        1292
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-3",
+              "name": "threeMonthsFromNow",
+              "value": "={{ $now.plus(3, 'months').toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "productDatasheets",
+              "value": "[CATEGORY: LAPTOPS]\n1. SKU: OEM-Laptop-Standard-Air\n   - Specs: Intel Core i5 (12th Gen), 16GB DDR4 RAM, 512GB SSD, Integrated Graphics.\n   - Best For: General office work, admin tasks.\n\n2. SKU: OEM-Laptop-Workstation-Pro\n   - Specs: Intel Core i7 (13th Gen), 32GB DDR5 RAM, 1TB NVMe SSD, NVIDIA RTX A2000 GPU.\n   - Durability: Aluminum chassis, standard cooling.\n   - Best For: Engineering, Design, High-Performance needs.\n\n[CATEGORY: ROUTERS]\n3. SKU: OEM-Router-Basic-4G\n   - Specs: 1Gbps Throughput, 4G LTE Backup, Basic Firewall.\n   - Mount: Desktop placement.\n\n4. SKU: OEM-Router-Industrial-X (Rugged)\n   - Specs: 10Gbps Throughput, Dual 5G SIM Backup, Advanced Integrated Firewall (Next-Gen).\n   - Mount: DIN Rail Mount ready.\n   - Durability: Industrial grade, high-heat tolerance components.",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "pricingDatabase",
+              "value": "[HARDWARE PRICES - UNIT COST]\n- OEM-Laptop-Standard-Air: $850.00\n- OEM-Laptop-Workstation-Pro: $1,450.00\n- OEM-Router-Basic-4G: $400.00\n- OEM-Router-Industrial-X: $1,200.00\n\n[SERVICE & TESTING COSTS - PER UNIT/RUN]\n- Standard OS Installation: $20.00\n- Drop Test (MIL-STD-810H): $150.00\n- Battery Stress Test (12-hour cycle): $75.00\n- Penetration Test (Level 3): $500.00\n- Heat Resistance Test (Chamber run): $250.00",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bb531cb4-4db5-4786-8459-acf39a0c0642",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        1220
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this RFP: {{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Sales Agent specialized in analyzing RFP (Request for Proposal) documents.\n\nYour task is to:\n1. Extract the RFP title, description, and submission deadline from the provided web page content\n2. Identify and summarize the product requirements mentioned in the RFP\n3. Identify and summarize the testing and acceptance criteria mentioned in the RFP\n4. Return the data in the structured JSON format defined by the output parser\n\nBe thorough and accurate in your extraction. If any information is not clearly stated, indicate it as \"Not specified\"."
+        }
+      },
+      "id": "c08a31b5-8bc7-4e01-b2ee-0466d09b23ec",
+      "name": "Sales Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1808,
+        1292
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9c9ae34c-6695-44d0-9e68-596cabf55e86",
+      "name": "Google Gemini - Sales Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1816,
+        1516
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ku1W6sNuF3wqMg6Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"rfpTitle\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Title of the RFP\"\n\t\t},\n\t\t\"rfpDescription\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Brief description of the RFP\"\n\t\t},\n\t\t\"submissionDeadline\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Deadline for RFP submission in ISO format\"\n\t\t},\n\t\t\"productRequirements\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Summary of product requirements\"\n\t\t},\n\t\t\"testingAndAcceptance\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Summary of testing and acceptance criteria\"\n\t\t},\n\t\t\"sourceUrl\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Original URL of the RFP\"\n\t\t},\n\t\t\"rfpFullText\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Complete RFP text content\"\n\t\t},\n\t\t\"quantity\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Quantity of items required\"\n\t\t}\n\t}\n}"
+      },
+      "id": "70df7c67-2b28-487b-9fe3-fdc1364f5762",
+      "name": "RFP Data Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1944,
+        1516
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ new Date($json.submissionDeadline) <= new Date($('Workflow Configuration').first().json.threeMonthsFromNow) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4ab9469b-bac4-4744-ae1f-2bbcc87f7c85",
+      "name": "Check Deadline Within 3 Months",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2160,
+        1292
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "587b86db-1d0d-46a5-941f-95270c37c4e2",
+      "name": "Select Top 1 RFP",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        1196
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=RFP Full Text: {{ $json.rfpFullText }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Main Agent acting as Project Manager for RFP responses.\n\nYour task is to read the selected RFP and create TWO distinct summaries:\n\n1. Technical Context Summary:\n   - Extract hardware specifications\n   - Identify scope of supply\n   - List product requirements\n   - Include quantity needed\n\n2. Pricing Context Summary:\n   - Extract commercial terms\n   - List required tests (e.g., Drop Test, Heat Test, Battery Test)\n   - Identify acceptance criteria\n   - Include quantities for pricing\n\nReturn both summaries in the structured JSON format defined by the output parser."
+        }
+      },
+      "id": "62c90860-2046-4ae5-8097-1a1a86b7ca71",
+      "name": "Main Agent - Create Summaries",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        2608,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "58d3772a-9b6c-4427-95f4-c1b046d7f29a",
+      "name": "Google Gemini - Main Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2616,
+        1168
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ku1W6sNuF3wqMg6Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"technicalContext\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Technical summary including hardware specs, scope of supply, and product requirements\"\n\t\t},\n\t\t\"pricingContext\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Pricing summary including commercial terms, required tests, acceptance criteria, and quantities\"\n\t\t},\n\t\t\"quantity\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Quantity of items required\"\n\t\t}\n\t}\n}"
+      },
+      "id": "8e3296f4-311a-4918-8ffe-fdce4a826dcd",
+      "name": "Summary Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2744,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Matches RFP technical requirements with internal product SKUs and calculates spec match percentage. Provide technical context as input.",
+        "text": "=Technical Context: {{ $fromAI(\"technicalContext\") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a Technical Agent specialized in product matching and specification analysis.\n\nYour task is to:\n1. Compare the Technical Context against the Product Datasheets database\n2. Identify products needed in the Scope of Supply\n3. Retrieve internal product specs (OEM SKUs)\n4. Calculate a Spec Match % by checking if products meet RFP requirements (speed, capacity, etc.)\n5. Select the top product recommendation (Top 1 SKU) with highest match percentage\n6. Return structured data with recommended SKU, spec match percentage, and justification\n\nProduct Datasheets Reference: {{ $('Workflow Configuration').first().json.productDatasheets }}\n\nBe precise in your matching and provide clear justification for recommendations."
+        }
+      },
+      "id": "03b922f6-a135-42f8-a395-a6ae520aa5c6",
+      "name": "Technical Agent Tool",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3088,
+        1272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7a3df914-954e-469d-8a3c-2f08b050fd1b",
+      "name": "Google Gemini - Technical Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        1480
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ku1W6sNuF3wqMg6Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"recommendedSku\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Top recommended product SKU\"\n\t\t},\n\t\t\"specMatchPercentage\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Percentage match between product specs and RFP requirements\"\n\t\t},\n\t\t\"technicalJustification\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Explanation of why this SKU matches the requirements\"\n\t\t}\n\t}\n}"
+      },
+      "id": "abcb30ad-6499-47fb-93fd-8c8752676dea",
+      "name": "Technical Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3248,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Calculates total costs including material and service costs. Provide pricing context and recommended SKU as input.",
+        "text": "=Pricing Context: {{ $fromAI(\"pricingContext\") }}\nRecommended SKU: {{ $fromAI(\"recommendedSku\") }}\nQuantity: {{ $fromAI(\"quantity\") }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a Pricing Agent specialized in cost calculation.\n\nYour task is to:\n1. Receive Product Recommendations (SKU) and Pricing Context\n2. Look up the unit price for the recommended SKU in the pricing database\n3. Look up costs for required tests (e.g., Drop Test, Heat Test, Battery Test)\n4. Calculate:\n   - Material Cost = Unit Price × Quantity\n   - Service Cost = Sum of all test costs\n   - Total Unit Cost = Unit Price + Service Costs per unit\n   - Total Project Cost = Total Unit Cost × Quantity\n5. Return structured pricing table with breakdown\n\nPricing Database Reference: {{ $(\"Workflow Configuration\").first().json.pricingDatabase }}\n\nProvide detailed cost breakdown and totals."
+        }
+      },
+      "id": "707e6cc6-8b65-4a64-bd35-717a7f037db5",
+      "name": "Pricing Agent Tool",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        3376,
+        1272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b5d1d1ab-bffb-4091-83aa-b08e78094f77",
+      "name": "Google Gemini - Pricing Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3376,
+        1480
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ku1W6sNuF3wqMg6Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"unitPrice\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Unit price of the recommended SKU\"\n\t\t},\n\t\t\"serviceCosts\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Total service costs for required tests\"\n\t\t},\n\t\t\"totalUnitCost\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Total cost per unit including services\"\n\t\t},\n\t\t\"totalProjectCost\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Total project cost for all units\"\n\t\t},\n\t\t\"costBreakdown\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Detailed breakdown of all costs\"\n\t\t}\n\t}\n}"
+      },
+      "id": "8ea2270f-f52a-4c14-b7fa-372d5f17033a",
+      "name": "Pricing Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3520,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=RFP Title: {{ $json.rfpTitle }}\nTechnical Context: {{ $json.technicalContext }}\nPricing Context: {{ $json.pricingContext }}\nQuantity: {{ $json.quantity }}",
+        "options": {
+          "systemMessage": "You are the Main Agent in Phase 2 - Final Consolidation.\n\nYour task is to:\n1. Call the Technical Agent Tool with the technical context to get product recommendations\n2. Call the Pricing Agent Tool with the pricing context and recommended SKU to get cost calculations\n3. Combine the technical rationale and financial data into a cohesive professional document\n4. Create a structured RFP Response Document with:\n   - Executive Summary\n   - Scope of Supply & Technical Compliance (with spec match %)\n   - Commercial Proposal (pricing table with breakdown)\n\nFormat the output as a professional proposal document ready for submission.\n\nExample format:\n\n# RFP Response: [RFP Title]\n\n## 1. Executive Summary\n[Brief overview of the proposal]\n\n## 2. Scope of Supply & Technical Compliance\n- Requirement: [Requirements from RFP]\n- Proposed Solution: [Recommended SKU]\n- Technical Match: [Spec Match %]\n\n## 3. Commercial Proposal\n| Item | Unit Price | Service Costs | Total Unit Cost | Quantity | Total Price |\n|------|-----------|---------------|-----------------|----------|-------------|\n| [SKU] | $[price] | $[services] | $[unit total] | [qty] | $[total] |\n\nReturn ONLY the final formatted document."
+        }
+      },
+      "id": "ed39a387-49ac-4e05-962c-a0b1a03fa2fc",
+      "name": "Main Agent - Final Response",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        3096,
+        1048
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "64be7670-944d-45b8-9bd4-3820178f19e4",
+      "name": "Google Gemini - Final Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        1272
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ku1W6sNuF3wqMg6Z",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "rfps",
+              "value": "[\n  {\n    \"sourceUrl\": \"https://global-procurement.example.com/rfp/2025/laptop-refresh-hardware\",\n    \"rfpTitle\": \"RFP for Corporate Hardware Refresh - Phase 1\",\n    \"status\": \"OPEN\",\n    \"submissionDeadline\": \"2025-04-15T23:59:59Z\",\n    \"rfpDescription\": \"Supply of 50 units of High-Performance Workstations for the engineering team.\",\n    \"productRequirements\": \"High-Performance Laptop - Quantity: 50 - Specs Required: Intel Core i7 (12th Gen or newer), 32GB DDR5 RAM, 1TB NVMe SSD, Dedicated GPU.\",\n    \"testingAndAcceptance\": \"Drop Test (MIL-STD-810H), Battery Stress Test (12-hour cycle)\",\n    \"quantity\": 50,\n    \"rfpFullText\": \"[SOURCE: https://global-procurement.example.com/rfp/2025/laptop-refresh-hardware] TITLE: RFP for Corporate Hardware Refresh - Phase 1 STATUS: OPEN DUE DATE: 2 Months from today DESCRIPTION: Supply of 50 units of High-Performance Workstations for the engineering team. SCOPE OF SUPPLY: - Item: High-Performance Laptop - Quantity: 50 - Specs Required: Intel Core i7 (12th Gen or newer), 32GB DDR5 RAM, 1TB NVMe SSD, Dedicated GPU. TESTS REQUIRED: - Drop Test (MIL-STD-810H) - Battery Stress Test (12-hour cycle)\"\n  },\n  {\n    \"sourceUrl\": \"https://tech-tenders.example.org/bids/industrial-routers-secure\",\n    \"rfpTitle\": \"Critical Infrastructure Network Upgrade\",\n    \"status\": \"URGENT\",\n    \"submissionDeadline\": \"2025-03-05T23:59:59Z\",\n    \"rfpDescription\": \"Procurement of ruggedized industrial routers for field deployment.\",\n    \"productRequirements\": \"Industrial 5G Router - Quantity: 10 - Specs Required: 10Gbps Throughput, Dual SIM 5G Backup, Integrated Firewall, DIN Rail Mount.\",\n    \"testingAndAcceptance\": \"Penetration Test (Level 3), Heat Resistance Test (up to 85°C)\",\n    \"quantity\": 10,\n    \"rfpFullText\": \"[SOURCE: https://tech-tenders.example.org/bids/industrial-routers-secure] TITLE: Critical Infrastructure Network Upgrade STATUS: URGENT DUE DATE: 3 Weeks from today DESCRIPTION: Procurement of ruggedized industrial routers for field deployment. SCOPE OF SUPPLY: - Item: Industrial 5G Router - Quantity: 10 - Specs Required: 10Gbps Throughput, Dual SIM 5G Backup, Integrated Firewall, DIN Rail Mount. TESTS REQUIRED: - Penetration Test (Level 3) - Heat Resistance Test (up to 85°C)\"\n  },\n  {\n    \"sourceUrl\": \"https://corp-services.example.net/admin/furniture-supply-Q3\",\n    \"rfpTitle\": \"HQ Office Furniture Supply\",\n    \"status\": \"PLANNING\",\n    \"submissionDeadline\": \"2025-08-15T23:59:59Z\",\n    \"rfpDescription\": \"Supply of 200 Ergonomic Office Chairs.\",\n    \"productRequirements\": \"Ergonomic Office Chairs - Quantity: 200\",\n    \"testingAndAcceptance\": \"Not specified\",\n    \"quantity\": 200,\n    \"rfpFullText\": \"[SOURCE: https://corp-services.example.net/admin/furniture-supply-Q3] TITLE: HQ Office Furniture Supply STATUS: PLANNING DUE DATE: 6 Months from today DESCRIPTION: Supply of 200 Ergonomic Office Chairs. NOTE: This RFP is currently in the planning phase and submissions are not yet accepted.\"\n  }\n]",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "30c2455f-d239-48cd-a37e-5f8a64be74e0",
+      "name": "Mock RFP Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        1220
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "rfps",
+        "options": {}
+      },
+      "id": "a5651ec9-e998-40d0-b25d-0011ac93b580",
+      "name": "Split RFPs",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        1220
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "agentType",
+              "value": "Sales Agent",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "allRFPs",
+              "value": "={{ $json }}",
+              "type": "object"
+            },
+            {
+              "id": "id-3",
+              "name": "note",
+              "value": "All RFPs processed by Sales Agent before filtering",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1240fa86-6278-4222-8da8-73e482bc217b",
+      "name": "Sales Agent Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        1292
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "rejectionReason",
+              "value": "Deadline exceeds 3 months",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "agentType",
+              "value": "Sales Agent - Rejected",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "878fdc06-753e-4862-8424-ee4d64480112",
+      "name": "Rejected RFPs Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2384,
+        1388
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "agentType",
+              "value": "Main Agent - Summaries",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "note",
+              "value": "Technical and Pricing context summaries created",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a8c3dbe6-f67c-4bc2-b76d-cfabc64e314c",
+      "name": "Main Agent Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        1344
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "agentType",
+              "value": "Final Agent - Complete RFP Response",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "note",
+              "value": "Final consolidated RFP response document",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "9c079f1e-b356-4047-85b4-276742451534",
+      "name": "Final RFP Response Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3744,
+        1048
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sales Agent Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Mock RFP Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini - Sales Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sales Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RFP Data Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Sales Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Deadline Within 3 Months",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sales Agent Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Technical Agent Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Main Agent - Final Response",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini - Technical Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Technical Agent Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deadline Within 3 Months": {
+      "main": [
+        [
+          {
+            "node": "Select Top 1 RFP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rejected RFPs Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Top 1 RFP": {
+      "main": [
+        [
+          {
+            "node": "Main Agent - Create Summaries",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Main Agent Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini - Main Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Main Agent - Create Summaries",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Main Agent - Create Summaries",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Agent - Create Summaries": {
+      "main": [
+        [
+          {
+            "node": "Main Agent - Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini - Final Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Main Agent - Final Response",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pricing Agent Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Main Agent - Final Response",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Technical Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Technical Agent Tool",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini - Pricing Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Pricing Agent Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pricing Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Pricing Agent Tool",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock RFP Data": {
+      "main": [
+        [
+          {
+            "node": "Split RFPs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split RFPs": {
+      "main": [
+        [
+          {
+            "node": "Sales Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Agent - Final Response": {
+      "main": [
+        [
+          {
+            "node": "Final RFP Response Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales Agent Output": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b2c1ec53-6527-4c2f-ba26-ec1f65ca3217",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "747c032a226aba3a6c57fb950a8c89ccf8526793eb5a4bdf35b5c1691c0ba025"
+  },
+  "id": "NPYzNvZPGbxflRlJ",
+  "tags": []
+}
