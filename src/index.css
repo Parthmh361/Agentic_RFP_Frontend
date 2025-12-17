@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 190 100% 50%;
+        --primary-foreground: 0 0% 0%;
+        --secondary: 262 83% 58%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --accent: 142 76% 36%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 190 100% 50%;
+        --radius: 0.5rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground font-body antialiased;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+@layer utilities {
+    .font-heading {
+        font-family: "Rajdhani", sans-serif;
+    }
+    .font-body {
+        font-family: "Manrope", sans-serif;
+    }
+    .font-mono {
+        font-family: "JetBrains Mono", monospace;
+    }
+    
+    .glass-morphism {
+        @apply backdrop-blur-xl bg-black/40 border border-white/10;
+    }
+    
+    .neon-glow {
+        box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+    }
+    
+    .active-border {
+        @apply border-primary/50 animate-pulse;
+    }
+    
+    .grid-background {
+        background-image: 
+            linear-gradient(to right, rgba(128, 128, 128, 0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(128, 128, 128, 0.07) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+}
+
+code {
+    font-family: "JetBrains Mono", source-code-pro, Menlo, Monaco, Consolas, monospace;
+}
